@@ -1,0 +1,487 @@
+﻿PROP FIRMS & FUTURES FIRMS PLATFORM
+COMPLETE BACKEND + ADMIN CMS DOCUMENTATION
+(INCLUDES FUTURES, COUPONS, PLATFORMS, BROKERS, PAYOUTS, CMS)
+
+
+VERSION: FINAL
+INTENT: INFORMATIONAL / COMPARISON PLATFORM
+SCOPE: DISPLAY-ONLY DATA (NO PAYMENTS, NO VALIDATION)
+
+
+1. CORE PHILOSOPHY
+
+
+This platform is:
+- A DATA DISPLAY SYSTEM
+- A COMPARISON & DISCOVERY TOOL
+- CMS-DRIVEN
+- SAFE (no financial logic)
+
+
+The backend:
+- Stores structured data
+- Exposes read-only APIs
+- Filters expired / inactive content
+
+
+The CMS:
+- Is the SINGLE SOURCE OF TRUTH
+- Manages ALL visible data
+- Requires NO developer intervention for updates
+
+
+Frontend:
+- NEVER calculates
+- NEVER validates
+- ONLY renders backend responses
+
+
+2. FIRM TYPES
+
+
+ENUM: firm_type
+---------------
+- prop_firm        (Forex / CFD firms)
+- futures_firm     (Futures-only firms)
+
+
+Both types exist in ONE firms table.
+
+
+3. CORE DATABASE TABLES
+
+
+-----------------------------------------------------------------------
+TABLE: firms
+-----------------------------------------------------------------------
+- id (UUID, PK)
+- name (TEXT)
+- slug (TEXT, UNIQUE)
+- firm_type (ENUM)
+- logo_url (TEXT)
+- founded_year (INTEGER)
+- rating (DECIMAL)
+- review_count (INTEGER)
+- max_allocation (INTEGER)
+- description (TEXT)
+- is_active (BOOLEAN)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP)
+
+
+CMS:
+- Create / edit firm
+- Activate / deactivate
+- Assign firm type
+- Upload logo
+- SEO slug control
+
+
+4. GLOBAL REFERENCE DATA
+
+
+All reference data:
+- Is reusable
+- Many-to-many with firms
+- Managed globally in CMS
+
+
+-----------------------------------------------------------------------
+TABLE: trading_platforms
+-----------------------------------------------------------------------
+- id
+- name
+- slug
+- category (prop | futures | both)
+- logo_url
+- website_url
+- is_active
+
+
+EXAMPLES:
+Volumetrica Trading, NinjaTrader, TradingView, Quantower, Bookmap, ATAS,
+Volsys, Volbook, EdgeProX, Finamark, Jigsaw Daytradr, MotiveWave, Rithmic,
+R Trader Pro, Sierra Chart, VolFix, WealthCharts, MultiCharts
+
+
+RELATION:
+- firm_trading_platforms (firm_id, trading_platform_id)
+
+
+CMS:
+- Manage platform library
+- Assign platforms per firm
+
+
+-----------------------------------------------------------------------
+TABLE: brokers
+-----------------------------------------------------------------------
+- id
+- name
+- slug
+- logo_url
+- broker_type (broker | data_feed | both)
+- website_url
+- is_active
+
+
+EXAMPLES:
+DXFeed, Tradovate, Rithmic
+
+
+RELATION:
+- firm_brokers (firm_id, broker_id)
+
+
+-----------------------------------------------------------------------
+TABLE: payout_methods
+-----------------------------------------------------------------------
+- id
+- name
+- slug
+- logo_url
+- is_active
+
+
+EXAMPLES:
+ACH, RiseWorks, Wise, Plane, Plaid, WorkMarket by ADP, Cryptocurrency
+
+
+RELATION:
+- firm_payout_methods (firm_id, payout_method_id)
+
+
+-----------------------------------------------------------------------
+TABLE: payment_methods
+-----------------------------------------------------------------------
+- id
+- name
+- slug
+- logo_url
+- is_active
+
+
+EXAMPLES:
+Visa, Mastercard, American Express, Crypto, PayPal, Google Pay, Apple Pay
+
+
+RELATION:
+- firm_payment_methods (firm_id, payment_method_id)
+
+
+5. FUTURES-SPECIFIC STRUCTURE
+
+
+Applies ONLY when firm_type = futures_firm.
+
+
+-----------------------------------------------------------------------
+TABLE: instrument_types
+-----------------------------------------------------------------------
+- id
+- name              // Futures
+- description
+
+
+-----------------------------------------------------------------------
+TABLE: futures_exchanges
+-----------------------------------------------------------------------
+- id
+- name
+- code
+
+
+EXAMPLES:
+CBOT, CME, COMEX, NYMEX
+
+
+RELATION:
+- firm_futures_exchanges (firm_id, futures_exchange_id)
+
+
+-----------------------------------------------------------------------
+TABLE: futures_programs
+-----------------------------------------------------------------------
+- id
+- firm_id
+- name              // Evaluation, Express, Funded
+- account_size
+- price
+- profit_target
+- max_drawdown
+- trailing_drawdown (BOOLEAN)
+- reset_fee
+- notes
+
+
+CMS:
+- Manage futures pricing cards
+- Unlimited programs per firm
+
+
+6. PROP FIRM–SPECIFIC STRUCTURE
+
+
+-----------------------------------------------------------------------
+TABLE: assets
+-----------------------------------------------------------------------
+- id
+- name              // Forex, Crypto, Indices, Energy, Stocks
+
+
+RELATION:
+- firm_assets (firm_id, asset_id)
+
+
+-----------------------------------------------------------------------
+TABLE: account_types
+-----------------------------------------------------------------------
+- id
+- firm_id
+- name
+- starting_balance
+- price
+- profit_target
+- daily_drawdown
+- max_drawdown
+- profit_split
+- evaluation_required
+
+
+-----------------------------------------------------------------------
+TABLE: evaluation_stages
+-----------------------------------------------------------------------
+- id
+- account_type_id
+- stage_number
+- profit_target
+- max_daily_loss
+- max_total_loss
+- min_trading_days
+
+
+7. RULES & POLICIES (CONTENT)
+
+
+-----------------------------------------------------------------------
+TABLE: rules
+-----------------------------------------------------------------------
+- id
+- firm_id
+- category (trading | risk | consistency | payout)
+- title
+- description
+
+
+CMS:
+- Rich text editor
+- Category-based grouping
+
+
+-----------------------------------------------------------------------
+TABLE: payout_policies
+-----------------------------------------------------------------------
+- id
+- firm_id
+- payout_frequency
+- first_payout_days
+- profit_split_initial
+- profit_split_max
+- notes
+
+
+8. DISPLAY-ONLY COUPON SYSTEM
+
+
+COUPONS ARE PURE CONTENT.
+NO LOGIC. NO VALIDATION. NO TRACKING.
+
+
+-----------------------------------------------------------------------
+TABLE: coupons
+-----------------------------------------------------------------------
+- id
+- code                  // CHAD
+- discount_text         // 20% OFF
+- discount_value
+- discount_type         // percentage | fixed
+- description
+- start_date
+- end_date
+- is_active
+- created_at
+- updated_at
+
+
+RELATION:
+- firm_coupons (firm_id, coupon_id)
+
+
+OPTIONAL:
+- coupon_account_types (coupon_id, account_type_id)
+
+
+BACKEND FILTER RULE:
+- is_active = true
+- start_date <= NOW() OR NULL
+- end_date > NOW() OR NULL
+
+
+9. ADMIN CMS – FUNCTIONALITY (CRITICAL SECTION)
+
+
+The CMS is REQUIRED.
+Without it, the platform is not maintainable.
+
+
+-----------------------------------------------------------------------
+9.1 CMS ROLES
+-----------------------------------------------------------------------
+
+
+ADMIN
+- Full access
+- Can create, edit, delete everything
+- Can publish/unpublish firms
+
+
+EDITOR
+- Can edit content
+- Cannot delete firms
+- Cannot manage system settings
+
+
+-----------------------------------------------------------------------
+9.2 CMS GLOBAL SECTIONS
+-----------------------------------------------------------------------
+
+
+GLOBAL DATA MANAGEMENT
+- Trading Platforms
+- Brokers / Data Feeds
+- Payout Methods
+- Payment Methods
+- Futures Exchanges
+- Assets
+- Coupons
+
+
+Each global item supports:
+- Name
+- Icon upload
+- Active toggle
+- Safe deletion (soft delete)
+
+
+-----------------------------------------------------------------------
+9.3 CMS FIRM EDITOR (MULTI-TAB)
+-----------------------------------------------------------------------
+
+
+TAB: Overview
+- Name
+- Slug
+- Firm type
+- Description
+- Logo
+- Rating (manual or synced later)
+- Active toggle
+
+
+TAB: Platforms
+- Assign trading platforms (multi-select)
+
+
+TAB: Brokers
+- Assign brokers / data feeds
+
+
+TAB: Programs
+- Futures Programs (if futures firm)
+- Account Types (if prop firm)
+
+
+TAB: Exchanges / Instruments
+- Futures exchanges OR prop assets
+
+
+TAB: Rules
+- Trading rules
+- Risk rules
+- Consistency rules
+- Payout rules
+
+
+TAB: Payouts
+- Payout policies
+- Payout methods
+
+
+TAB: Payments
+- Accepted payment methods
+
+
+TAB: Coupons
+- Assign display-only coupon codes
+- Select featured coupon (optional)
+
+
+-----------------------------------------------------------------------
+9.4 CMS SAFETY & UX RULES
+-----------------------------------------------------------------------
+
+
+- Soft deletes only
+- Confirmation dialogs for destructive actions
+- Draft vs Published (optional)
+- Audit logs (who edited what, when)
+
+
+10. PUBLIC API ENDPOINTS
+
+
+PUBLIC (READ-ONLY)
+-----------------
+GET /api/firms?firm_type=prop_firm
+GET /api/firms?firm_type=futures_firm
+GET /api/firms/{slug}
+
+
+Admin (Protected)
+-----------------
+POST /api/admin/firms
+PUT  /api/admin/firms/{id}
+
+
+POST /api/admin/coupons
+PUT  /api/admin/coupons/{id}
+
+
+POST /api/admin/platforms
+POST /api/admin/brokers
+POST /api/admin/payout-methods
+POST /api/admin/payment-methods
+
+
+11. WHAT THIS SYSTEM NEVER DOES
+
+
+
+
+❌ Payments
+❌ Checkout
+❌ Coupon validation
+❌ Affiliate tracking
+❌ Broker integrations
+❌ Trading connections
+❌ User accounts (for now)
+
+
+12. FINAL GOLDEN RULES
+
+
+1. If it appears in the UI → it must be in the DB
+2. If it has an icon → it must be a reference table
+3. If admins need to change it → it must be in CMS
+4. Frontend never decides business rules
+5. Backend never applies financial logic

@@ -1,0 +1,2321 @@
+{
+  "info": {
+    "_postman_id": "3cd15e68-c558-4947-acb3-022095965d01",
+    "name": "PROP FIRMS CMS",
+    "description": "Complete API collection for Prop Firms CMS Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "36765469"
+  },
+  "item": [
+    {
+      "name": "Public Routes",
+      "item": [
+        {
+          "name": "List Firms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/firms?firm_type=prop_firm",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "firms"],
+              "query": [
+                {
+                  "key": "firm_type",
+                  "value": "prop_firm",
+                  "description": "Optional: prop_firm or futures_firm"
+                },
+                {
+                  "key": "filter",
+                  "value": "top_rated",
+                  "description": "Optional filter preset: top_rated, most_reviewed, newest (takes precedence over sort_by)"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "rating",
+                  "description": "Optional: name, rating, review_count, founded_year, max_allocation, created_at (ignored if filter is provided)"
+                },
+                {
+                  "key": "order",
+                  "value": "DESC",
+                  "description": "Optional: ASC or DESC (default: ASC, ignored if filter is provided)"
+                }
+              ]
+            },
+            "description": "Get list of active firms with optional filters and sorting.\n\nFilter presets:\n- top_rated: Sort by rating DESC, then review_count DESC\n- most_reviewed: Sort by review_count DESC, then rating DESC\n- newest: Sort by created_at DESC\n\nResponse includes:\n- assets: Array of supported assets for each firm\n- years_in_business: Calculated from founded_year"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Firm by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/firms/:slug",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "firms", ":slug"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "example-firm",
+                  "description": "Firm slug"
+                }
+              ]
+            },
+            "description": "Get firm details by slug with all related data. Response includes:\n- payout_policies: Original flat array (backward compatible)\n- payout_policies_grouped: Grouped by program_type for easier UI display\n  Format: [{ program_type: \"1-Step\", policies: [...] }, ...]"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth Routes",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.environment.set('auth_token', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@propfirms.com\",\n    \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/auth/login",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login with email and password. Token is stored in cookie and returned in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/auth/me",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get current authenticated user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/auth/logout",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Logout and clear authentication cookie"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Firms",
+      "item": [
+        {
+          "name": "List Firms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Firm by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Firm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Example Firm\",\n    \"slug\": \"example-firm\",\n    \"firm_type\": \"prop_firm\",\n    \"logo_url\": \"https://example.com/logo.png\",\n    \"founded_year\": 2020,\n    \"rating\": 4.5,\n    \"review_count\": 100,\n    \"max_allocation\": 500000,\n    \"description\": \"Example prop firm description\",\n    \"location\": \"UAE\",\n    \"guide_video_url\": \"https://example.com/video.mp4\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Firm",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Firm Name\",\n    \"rating\": 4.8\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Firm Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Firm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/firms/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "firms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Trading Platforms",
+      "item": [
+        {
+          "name": "List Platforms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/platforms",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Platform",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"MetaTrader 5\",\n    \"slug\": \"metatrader-5\",\n    \"category\": \"desktop\",\n    \"logo_url\": \"https://example.com/mt5.png\",\n    \"website_url\": \"https://www.metatrader5.com\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/platforms",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "platforms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Platform",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Platform Name\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/platforms/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "platforms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Platform Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/platforms/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "platforms", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Platform",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/platforms/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "platforms", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Brokers",
+      "item": [
+        {
+          "name": "List Brokers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/brokers",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "brokers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Broker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Example Broker\",\n    \"slug\": \"example-broker\",\n    \"logo_url\": \"https://example.com/broker.png\",\n    \"broker_type\": \"regulated\",\n    \"website_url\": \"https://example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/brokers",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "brokers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Broker",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Broker Name\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/brokers/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "brokers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Broker Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/brokers/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "brokers", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Broker",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/brokers/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "brokers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Payout Methods",
+      "item": [
+        {
+          "name": "List Payout Methods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-methods",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-methods"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payout Method",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Bank Transfer\",\n    \"slug\": \"bank-transfer\",\n    \"logo_url\": \"https://example.com/bank.png\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-methods",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-methods"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payout Method",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Payout Method\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-methods/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-methods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Payout Method Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-methods/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-methods", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payout Method",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-methods/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-methods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Payment Methods",
+      "item": [
+        {
+          "name": "List Payment Methods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payment-methods",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payment-methods"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment Method",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Credit Card\",\n    \"slug\": \"credit-card\",\n    \"logo_url\": \"https://example.com/cc.png\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payment-methods",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payment-methods"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Method",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Payment Method\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payment-methods/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payment-methods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Payment Method Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payment-methods/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payment-methods", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payment Method",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payment-methods/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payment-methods", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Futures",
+      "item": [
+        {
+          "name": "Instrument Types",
+          "item": [
+            {
+              "name": "Create Instrument Type",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Crude Oil\",\n    \"description\": \"WTI Crude Oil futures\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/instrument-types",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "instrument-types"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Instrument Type",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Instrument Type\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/instrument-types/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "instrument-types", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Instrument Type",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/instrument-types/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "instrument-types", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Futures Exchanges",
+          "item": [
+            {
+              "name": "Create Futures Exchange",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"CME Group\",\n    \"code\": \"CME\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/exchanges",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "exchanges"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Futures Exchange",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Exchange Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/exchanges/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "exchanges", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Futures Exchange",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/exchanges/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "exchanges", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Futures Programs",
+          "item": [
+            {
+              "name": "Create Futures Program",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firm_id\": \"\",\n    \"name\": \"50K Challenge\",\n    \"account_size\": 50000,\n    \"price\": 299,\n    \"profit_target\": 6000,\n    \"max_drawdown\": 5000,\n    \"trailing_drawdown\": true,\n    \"reset_fee\": 99,\n    \"notes\": \"Example futures program\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/programs",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "programs"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Futures Program",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Program Name\",\n    \"price\": 349\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/programs/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "programs", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Futures Program",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/futures/programs/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "futures", "programs", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin - Prop",
+      "item": [
+        {
+          "name": "Assets",
+          "item": [
+            {
+              "name": "Create Asset",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Forex\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/assets",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "assets"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Asset",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Forex\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/assets",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "assets"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Asset",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Asset Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/assets/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "assets", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Toggle Asset Active",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/assets/:id/toggle-active",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "assets", ":id", "toggle-active"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Asset",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/assets/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "assets", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Account Types",
+          "item": [
+            {
+              "name": "Create Account Type",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firm_id\": \"\",\n    \"name\": \"10K Challenge\",\n    \"starting_balance\": 10000,\n    \"price\": 99,\n    \"profit_target\": 1000,\n    \"daily_drawdown\": 500,\n    \"max_drawdown\": 1000,\n    \"profit_split\": 80,\n    \"evaluation_required\": true,\n    \"program_variant\": \"2 Step\",\n    \"program_name\": \"FundingPips\"\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/account-types",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "account-types"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Account Type",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firm_id\": \"\",\n    \"name\": \"10K Challenge\",\n    \"starting_balance\": 10000,\n    \"price\": 99,\n    \"profit_target\": 1000,\n    \"daily_drawdown\": 500,\n    \"max_drawdown\": 1000,\n    \"profit_split\": 80,\n    \"evaluation_required\": true\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/account-types",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "account-types"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Account Type",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Account Type\",\n    \"price\": 149\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/account-types/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "account-types", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Account Type",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/account-types/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "account-types", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Evaluation Stages",
+          "item": [
+            {
+              "name": "Create Evaluation Stage",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"account_type_id\": \"\",\n    \"stage_number\": 1,\n    \"profit_target\": 1000,\n    \"max_daily_loss\": 500,\n    \"max_total_loss\": 1000,\n    \"min_trading_days\": 5\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/evaluation-stages",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "evaluation-stages"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Evaluation Stage",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"account_type_id\": \"\",\n    \"stage_number\": 1,\n    \"profit_target\": 1000,\n    \"max_daily_loss\": 500,\n    \"max_total_loss\": 1000,\n    \"min_trading_days\": 5\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/evaluation-stages",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "evaluation-stages"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Evaluation Stage",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"profit_target\": 1200,\n    \"min_trading_days\": 7\n}"
+                },
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/evaluation-stages/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "evaluation-stages", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Evaluation Stage",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{auth_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{API_URL}}/api/v1/admin/prop/evaluation-stages/:id",
+                  "host": ["{{API_URL}}"],
+                  "path": ["api", "v1", "admin", "prop", "evaluation-stages", ":id"],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Combained props",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Forex\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/prop",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "prop"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Rules",
+      "item": [
+        {
+          "name": "Create Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firm_id\": \"\",\n    \"category\": \"consistency\",\n    \"title\": \"Minimum Trading Days\",\n    \"description\": \"You must have a minimum of 5 trading days per payout\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/rules",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "rules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated Rule Title\",\n    \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/rules/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "rules", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/rules/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "rules", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Payout Policies",
+      "item": [
+        {
+          "name": "List Payout Policies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-policies",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-policies"]
+            },
+            "description": "Get all payout policies. Policies can be grouped by program_type in the public API response."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payout Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firm_id\": \"\",\n    \"program_type\": \"1-Step\",\n    \"payout_frequency\": \"weekly\",\n    \"first_payout_days\": 7,\n    \"profit_split_initial\": 50,\n    \"profit_split_max\": 90,\n    \"notes\": \"Example payout policy\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-policies",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-policies"]
+            },
+            "description": "Create a new payout policy. Include program_type (e.g., '1-Step', '2-Step', 'FundingPips Pro', 'FundingPips Zero', 'Scaling Hot Seat') to enable grouping in public API responses."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payout Policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"program_type\": \"2-Step\",\n    \"profit_split_initial\": 60,\n    \"profit_split_max\": 95\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-policies/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-policies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Update payout policy. Can update program_type to change grouping in public API responses."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payout Policy",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/payout-policies/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "payout-policies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Coupons",
+      "item": [
+        {
+          "name": "Create Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"SAVE20\",\n    \"discount_text\": \"20% OFF\",\n    \"discount_value\": 20,\n    \"discount_type\": \"percentage\",\n    \"description\": \"Save 20% on your first purchase\",\n    \"start_date\": \"2024-01-01T00:00:00Z\",\n    \"end_date\": \"2024-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"discount_value\": 25,\n    \"discount_text\": \"25% OFF\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Coupon Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Coupon to Firm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"coupon_id\": \"\",\n    \"firm_id\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons/assign/firm",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons", "assign", "firm"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Coupon to Account Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"coupon_id\": \"\",\n    \"account_type_id\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/coupons/assign/account-type",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "coupons", "assign", "account-type"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"CMS Admin\",\n    \"email\": \"admin2@propfirms.com\",\n    \"password\": \"Admin@1234\",\n    \"role\": \"ADMIN\",\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated CMS User\",\n    \"role\": \"EDITOR\",\n    \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle User Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users/:id/toggle-active",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users", ":id", "toggle-active"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change User Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"password\": \"NewStrongPass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users/:id/change-password",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users", ":id", "change-password"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/users/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Countries",
+      "item": [
+        {
+          "name": "List Countries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/countries",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "countries"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Country",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"United States\",\n    \"code\": \"US\",\n    \"flag_url\": \"https://example.com/flags/us.png\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/countries",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "countries"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Country",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Country Name\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/countries/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "countries", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Country",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/countries/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "countries", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Commissions",
+      "item": [
+        {
+          "name": "List Commissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/commissions?account_type_id=",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "commissions"],
+              "query": [
+                {
+                  "key": "account_type_id",
+                  "value": "",
+                  "description": "Optional: Filter by account type ID"
+                },
+                {
+                  "key": "futures_program_id",
+                  "value": "",
+                  "description": "Optional: Filter by futures program ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Commission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"account_type_id\": \"\",\n    \"asset_name\": \"Forex\",\n    \"commission_type\": \"per_lot\",\n    \"commission_value\": 3.00,\n    \"commission_text\": \"$3 per lot, 1 way, 6$ per round trip\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/commissions",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "commissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Commission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"commission_value\": 4.00,\n    \"commission_text\": \"Updated commission text\"\n}"
+            },
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/commissions/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "commissions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Commission",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{API_URL}}/api/v1/admin/commissions/:id",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "v1", "admin", "commissions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Utility",
+      "item": [
+        {
+          "name": "Ping Server",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}/api/ping",
+              "host": ["{{API_URL}}"],
+              "path": ["api", "ping"]
+            },
+            "description": "Health check endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{API_URL}}",
+              "host": ["{{API_URL}}"]
+            },
+            "description": "Root endpoint"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "API_URL",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
