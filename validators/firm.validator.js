@@ -19,6 +19,13 @@ const createFirmSchema = Joi.object(firmBase);
 
 const updateFirmSchema = Joi.object({
   ...firmBase,
+  // Association arrays for many-to-many relationships
+  trading_platform_ids: Joi.array().items(Joi.string().uuid()).optional(),
+  broker_ids: Joi.array().items(Joi.string().uuid()).optional(),
+  payout_method_ids: Joi.array().items(Joi.string().uuid()).optional(),
+  payment_method_ids: Joi.array().items(Joi.string().uuid()).optional(),
+  asset_ids: Joi.array().items(Joi.string().uuid()).optional(),
+  restricted_country_ids: Joi.array().items(Joi.string().uuid()).optional(),
 }).fork(Object.keys(firmBase), (schema) => schema.optional());
 
 const firmIdParamSchema = Joi.object({

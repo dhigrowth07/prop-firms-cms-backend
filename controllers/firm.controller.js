@@ -58,7 +58,6 @@ const updateFirm = async (req, res) => {
 
     // Extract association arrays from body
     const { trading_platform_ids, broker_ids, payout_method_ids, payment_method_ids, asset_ids, restricted_country_ids, ...firmData } = req.body;
-
     // Update firm basic data first
     if (Object.keys(firmData).length > 0) {
       await firm.update(firmData);
@@ -121,14 +120,16 @@ const updateFirm = async (req, res) => {
       }
     }
 
-    // Reload firm with associations - need to reload from database after setting associations
-    const updatedFirm = await Firm.findByPk(id, {
+    // Reload firm with all associations - same as getFirmById
+    const updatedFirm = await Firm.findOne({
+      where: { id },
       include: [
+        // Global references (all firm types)
         {
           model: TradingPlatform,
           as: "trading_platforms",
           required: false,
-          through: { attributes: [] }, // Exclude junction table attributes
+          through: { attributes: [] },
           attributes: ["id", "name", "slug", "logo_url", "website_url", "category"],
         },
         {
@@ -152,12 +153,26 @@ const updateFirm = async (req, res) => {
           through: { attributes: [] },
           attributes: ["id", "name", "slug", "logo_url"],
         },
+        // Rules and policies (all firm types)
         {
-          model: Asset,
-          as: "assets",
+          model: Rule,
+          as: "rules",
+          required: false,
+          attributes: ["id", "category", "title", "description", "created_at", "updated_at"],
+        },
+        {
+          model: PayoutPolicy,
+          as: "payout_policies",
+          required: false,
+          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "created_at", "updated_at"],
+        },
+        // Coupons (filtered by display rules)
+        {
+          model: Coupon,
+          as: "coupons",
           required: false,
           through: { attributes: [] },
-          attributes: ["id", "name"],
+          attributes: ["id", "code", "discount_text", "discount_value", "discount_type", "description", "start_date", "end_date", "is_active"],
         },
         {
           model: Country,
@@ -167,9 +182,157 @@ const updateFirm = async (req, res) => {
           attributes: ["id", "name", "code", "flag_url"],
         },
       ],
+      attributes: [
+        "id",
+        "name",
+        "slug",
+        "firm_type",
+        "logo_url",
+        "founded_year",
+        "rating",
+        "review_count",
+        "max_allocation",
+        "description",
+        "location",
+        "guide_video_url",
+        "is_active",
+        "created_at",
+        "updated_at",
+      ],
     });
 
-    return successResponse(res, "Firm updated successfully", 200, { firm: updatedFirm });
+    if (!updatedFirm) {
+      return errorResponse(res, "Firm not found after update", 404);
+    }
+
+    // Apply same post-processing as getFirmById
+    const responseData = updatedFirm.toJSON();
+    responseData.coupons = filterActiveCoupons(responseData.coupons);
+
+    // Calculate years in business
+    const currentYear = new Date().getFullYear();
+    if (responseData.founded_year) {
+      responseData.years_in_business = currentYear - responseData.founded_year;
+    } else {
+      responseData.years_in_business = null;
+    }
+
+    // Separate consistency rules from other rules
+    if (responseData.rules && Array.isArray(responseData.rules)) {
+      responseData.consistency_rules = responseData.rules.filter((rule) => rule.category === "consistency");
+      responseData.firm_rules = responseData.rules.filter((rule) => rule.category !== "consistency");
+    } else {
+      responseData.consistency_rules = [];
+      responseData.firm_rules = [];
+    }
+
+    // Group payout policies by program_type
+    if (responseData.payout_policies && Array.isArray(responseData.payout_policies)) {
+      const groupedPayoutPolicies = {};
+
+      responseData.payout_policies.forEach((policy) => {
+        const programType = policy.program_type || "General";
+        if (!groupedPayoutPolicies[programType]) {
+          groupedPayoutPolicies[programType] = [];
+        }
+        groupedPayoutPolicies[programType].push(policy);
+      });
+
+      // Convert to array format: [{ program_type: "1-Step", policies: [...] }, ...]
+      responseData.payout_policies_grouped = Object.keys(groupedPayoutPolicies).map((programType) => ({
+        program_type: programType,
+        policies: groupedPayoutPolicies[programType],
+      }));
+    } else {
+      responseData.payout_policies_grouped = [];
+    }
+
+    // Load firm-type-specific data
+    if (updatedFirm.firm_type === "futures_firm") {
+      // Futures-specific includes - get exchanges via junction table
+      const futuresExchangesRows = await sequelize.query(
+        `SELECT fe.id, fe.name, fe.code 
+         FROM futures_exchanges fe
+         INNER JOIN firm_futures_exchanges ffe ON fe.id = ffe.futures_exchange_id
+         WHERE ffe.firm_id = :firmId`,
+        { replacements: { firmId: updatedFirm.id }, type: QueryTypes.SELECT }
+      );
+
+      const futuresPrograms = await FuturesProgram.findAll({
+        where: { firm_id: updatedFirm.id },
+        include: [
+          {
+            model: Commission,
+            as: "commissions",
+            required: false,
+            attributes: ["id", "asset_name", "commission_type", "commission_value", "commission_text", "notes"],
+          },
+        ],
+        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "created_at", "updated_at"],
+        order: [["account_size", "ASC"]],
+      });
+
+      const instrumentTypes = await InstrumentType.findAll({
+        attributes: ["id", "name", "description"],
+      });
+
+      responseData.futures_exchanges = Array.isArray(futuresExchangesRows) ? futuresExchangesRows : [];
+      responseData.futures_programs = futuresPrograms.map((fp) => fp.toJSON());
+      responseData.instrument_types = instrumentTypes.map((it) => it.toJSON());
+    } else if (updatedFirm.firm_type === "prop_firm") {
+      // Prop-specific includes - get assets via junction table
+      const assetsRows = await sequelize.query(
+        `SELECT a.id, a.name 
+         FROM assets a
+         INNER JOIN firm_assets fa ON a.id = fa.asset_id
+         WHERE fa.firm_id = :firmId`,
+        { replacements: { firmId: updatedFirm.id }, type: QueryTypes.SELECT }
+      );
+
+      const accountTypes = await AccountType.findAll({
+        where: { firm_id: updatedFirm.id },
+        include: [
+          {
+            model: EvaluationStage,
+            as: "evaluation_stages",
+            required: false,
+            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "created_at", "updated_at"],
+            order: [["stage_number", "ASC"]],
+          },
+          {
+            model: Commission,
+            as: "commissions",
+            required: false,
+            attributes: ["id", "asset_name", "commission_type", "commission_value", "commission_text", "notes"],
+          },
+        ],
+        attributes: [
+          "id",
+          "name",
+          "starting_balance",
+          "price",
+          "profit_target",
+          "daily_drawdown",
+          "max_drawdown",
+          "profit_split",
+          "evaluation_required",
+          "program_variant",
+          "program_name",
+          "created_at",
+          "updated_at",
+        ],
+        order: [["starting_balance", "ASC"]],
+      });
+
+      // Ensure assets is always an array (QueryTypes.SELECT returns array of results)
+      responseData.assets = Array.isArray(assetsRows) ? assetsRows : [];
+      responseData.account_types = accountTypes.map((at) => at.toJSON());
+    }
+    console.log(`[updateFirm] responseData:`, responseData);
+
+    console.log(`[updateFirm] Returning firm data with keys:`, Object.keys(responseData));
+
+    return successResponse(res, "Firm updated successfully", 200, { firm: responseData });
   } catch (err) {
     return errorResponse(res, "Failed to update firm", 500, err);
   }
