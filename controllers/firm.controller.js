@@ -158,13 +158,13 @@ const updateFirm = async (req, res) => {
           model: Rule,
           as: "rules",
           required: false,
-          attributes: ["id", "category", "title", "description", "created_at", "updated_at"],
+          attributes: ["id", "category", "title", "description", "createdAt", "updatedAt"],
         },
         {
           model: PayoutPolicy,
           as: "payout_policies",
           required: false,
-          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "created_at", "updated_at"],
+          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "createdAt", "updatedAt"],
         },
         // Coupons (filtered by display rules)
         {
@@ -196,8 +196,8 @@ const updateFirm = async (req, res) => {
         "location",
         "guide_video_url",
         "is_active",
-        "created_at",
-        "updated_at",
+        "createdAt",
+        "updatedAt",
       ],
     });
 
@@ -268,7 +268,7 @@ const updateFirm = async (req, res) => {
             attributes: ["id", "asset_name", "commission_type", "commission_value", "commission_text", "notes"],
           },
         ],
-        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "created_at", "updated_at"],
+        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "createdAt", "updatedAt"],
         order: [["account_size", "ASC"]],
       });
 
@@ -296,7 +296,7 @@ const updateFirm = async (req, res) => {
             model: EvaluationStage,
             as: "evaluation_stages",
             required: false,
-            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "created_at", "updated_at"],
+            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "createdAt", "updatedAt"],
             order: [["stage_number", "ASC"]],
           },
           {
@@ -318,8 +318,8 @@ const updateFirm = async (req, res) => {
           "evaluation_required",
           "program_variant",
           "program_name",
-          "created_at",
-          "updated_at",
+          "createdAt",
+          "updatedAt",
         ],
         order: [["starting_balance", "ASC"]],
       });
@@ -380,13 +380,13 @@ const getFirmById = async (req, res) => {
           model: Rule,
           as: "rules",
           required: false,
-          attributes: ["id", "category", "title", "description", "created_at", "updated_at"],
+          attributes: ["id", "category", "title", "description", "createdAt", "updatedAt"],
         },
         {
           model: PayoutPolicy,
           as: "payout_policies",
           required: false,
-          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "created_at", "updated_at"],
+          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "createdAt", "updatedAt"],
         },
         // Coupons (filtered by display rules)
         {
@@ -418,8 +418,8 @@ const getFirmById = async (req, res) => {
         "location",
         "guide_video_url",
         "is_active",
-        "created_at",
-        "updated_at",
+        "createdAt",
+        "updatedAt",
       ],
     });
 
@@ -427,10 +427,8 @@ const getFirmById = async (req, res) => {
       return errorResponse(res, "Firm not found", 404);
     }
 
-    console.log(`[getFirmById] Firm found: ${firm.name}, type: ${firm.firm_type}`);
     // Filter coupons based on display rules
     const firmData = firm.toJSON();
-    console.log(`[getFirmById] Firm data keys:`, Object.keys(firmData));
     firmData.coupons = filterActiveCoupons(firmData.coupons);
 
     // Calculate years in business
@@ -492,7 +490,7 @@ const getFirmById = async (req, res) => {
             attributes: ["id", "asset_name", "commission_type", "commission_value", "commission_text", "notes"],
           },
         ],
-        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "created_at", "updated_at"],
+        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "createdAt", "updatedAt"],
         order: [["account_size", "ASC"]],
       });
 
@@ -520,7 +518,7 @@ const getFirmById = async (req, res) => {
             model: EvaluationStage,
             as: "evaluation_stages",
             required: false,
-            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "created_at", "updated_at"],
+            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "createdAt", "updatedAt"],
             order: [["stage_number", "ASC"]],
           },
           {
@@ -542,8 +540,8 @@ const getFirmById = async (req, res) => {
           "evaluation_required",
           "program_variant",
           "program_name",
-          "created_at",
-          "updated_at",
+          "createdAt",
+          "updatedAt",
         ],
         order: [["starting_balance", "ASC"]],
       });
@@ -662,6 +660,64 @@ const deleteFirm = async (req, res) => {
   }
 };
 
+const bulkFirmActions = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { ids, action } = req.body;
+
+    if (action === "activate" || action === "deactivate") {
+      const is_active = action === "activate";
+      await Firm.update({ is_active }, { where: { id: ids }, transaction: t });
+      await t.commit();
+      return successResponse(res, `Firms ${action}d successfully`, 200);
+    }
+
+    if (action === "delete") {
+      // Check associations for all firms first
+      for (const id of ids) {
+        const [futuresProgramsCount] = await sequelize.query(`SELECT COUNT(*) as count FROM futures_programs WHERE firm_id = :firmId`, { replacements: { firmId: id }, type: QueryTypes.SELECT, transaction: t });
+        const [accountTypesCount] = await sequelize.query(`SELECT COUNT(*) as count FROM account_types WHERE firm_id = :firmId`, { replacements: { firmId: id }, type: QueryTypes.SELECT, transaction: t });
+        const [rulesCount] = await sequelize.query(`SELECT COUNT(*) as count FROM rules WHERE firm_id = :firmId`, { replacements: { firmId: id }, type: QueryTypes.SELECT, transaction: t });
+        const [payoutPoliciesCount] = await sequelize.query(`SELECT COUNT(*) as count FROM payout_policies WHERE firm_id = :firmId`, { replacements: { firmId: id }, type: QueryTypes.SELECT, transaction: t });
+        const [firmCouponsCount] = await sequelize.query(`SELECT COUNT(*) as count FROM firm_coupons WHERE firm_id = :firmId`, { replacements: { firmId: id }, type: QueryTypes.SELECT, transaction: t });
+
+        const total = (futuresProgramsCount[0]?.count || 0) + (accountTypesCount[0]?.count || 0) + (rulesCount[0]?.count || 0) + (payoutPoliciesCount[0]?.count || 0) + (firmCouponsCount[0]?.count || 0);
+
+        if (total > 0) {
+          await t.rollback();
+          return errorResponse(res, `One or more selected firms have associated records and cannot be deleted.`, 400);
+        }
+      }
+
+      // Remove many-to-many associations for all firms
+      const junctionTables = [
+        "firm_trading_platforms", "firm_brokers", "firm_payout_methods",
+        "firm_payment_methods", "firm_futures_exchanges", "firm_assets",
+        "firm_restricted_countries"
+      ];
+
+      for (const table of junctionTables) {
+        await sequelize.query(`DELETE FROM ${table} WHERE firm_id IN (:ids)`, {
+          replacements: { ids },
+          transaction: t
+        });
+      }
+
+      // Delete the firms
+      await Firm.destroy({ where: { id: ids }, transaction: t });
+      await t.commit();
+      return successResponse(res, "Firms deleted successfully", 200);
+    }
+
+    await t.rollback();
+    return errorResponse(res, "Invalid action", 400);
+  } catch (err) {
+    await t.rollback();
+    console.error(`[bulkFirmActions] Error:`, err);
+    return errorResponse(res, "Failed to perform bulk action", 500, err);
+  }
+};
+
 module.exports = {
   createFirm,
   updateFirm,
@@ -669,4 +725,5 @@ module.exports = {
   listFirms,
   toggleFirmActive,
   deleteFirm,
+  bulkFirmActions,
 };

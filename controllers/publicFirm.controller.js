@@ -73,7 +73,7 @@ const listFirms = async (req, res) => {
           ];
           break;
         case "newest":
-          orderBy = [["created_at", "DESC"]];
+          orderBy = [["createdAt", "DESC"]];
           break;
         default:
           // Invalid filter, use default
@@ -81,7 +81,7 @@ const listFirms = async (req, res) => {
       }
     } else if (sort_by) {
       // Use custom sort_by if no filter preset
-      const validSortFields = ["name", "rating", "review_count", "founded_year", "max_allocation", "created_at"];
+      const validSortFields = ["name", "rating", "review_count", "founded_year", "max_allocation", "createdAt"];
       if (validSortFields.includes(sort_by)) {
         const sortOrder = order && order.toUpperCase() === "DESC" ? "DESC" : "ASC";
         orderBy = [[sort_by, sortOrder]];
@@ -145,8 +145,8 @@ const listFirms = async (req, res) => {
         "location",
         "guide_video_url",
         "is_active",
-        "created_at",
-        "updated_at",
+        "createdAt",
+        "updatedAt",
       ],
       order: orderBy,
     });
@@ -224,13 +224,13 @@ const getFirmBySlug = async (req, res) => {
           model: Rule,
           as: "rules",
           required: false,
-          attributes: ["id", "category", "title", "description", "created_at", "updated_at"],
+          attributes: ["id", "category", "title", "description", "createdAt", "updatedAt"],
         },
         {
           model: PayoutPolicy,
           as: "payout_policies",
           required: false,
-          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "created_at", "updated_at"],
+          attributes: ["id", "payout_frequency", "first_payout_days", "profit_split_initial", "profit_split_max", "notes", "program_type", "createdAt", "updatedAt"],
         },
         // Coupons (filtered by display rules)
         {
@@ -262,8 +262,8 @@ const getFirmBySlug = async (req, res) => {
         "location",
         "guide_video_url",
         "is_active",
-        "created_at",
-        "updated_at",
+        "createdAt",
+        "updatedAt",
       ],
     });
 
@@ -338,7 +338,7 @@ const getFirmBySlug = async (req, res) => {
             attributes: ["id", "asset_name", "commission_type", "commission_value", "commission_text", "notes"],
           },
         ],
-        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "created_at", "updated_at"],
+        attributes: ["id", "name", "account_size", "price", "profit_target", "max_drawdown", "trailing_drawdown", "reset_fee", "notes", "createdAt", "updatedAt"],
         order: [["account_size", "ASC"]],
       });
 
@@ -366,7 +366,7 @@ const getFirmBySlug = async (req, res) => {
             model: EvaluationStage,
             as: "evaluation_stages",
             required: false,
-            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "created_at", "updated_at"],
+            attributes: ["id", "stage_number", "profit_target", "max_daily_loss", "max_total_loss", "min_trading_days", "createdAt", "updatedAt"],
             order: [["stage_number", "ASC"]],
           },
           {
@@ -388,8 +388,8 @@ const getFirmBySlug = async (req, res) => {
           "evaluation_required",
           "program_variant",
           "program_name",
-          "created_at",
-          "updated_at",
+          "createdAt",
+          "updatedAt",
         ],
         order: [["starting_balance", "ASC"]],
       });

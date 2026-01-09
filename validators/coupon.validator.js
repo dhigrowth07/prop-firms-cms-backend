@@ -28,11 +28,24 @@ const assignCouponToAccountTypeSchema = Joi.object({
   coupon_id: Joi.string().uuid().required(),
 });
 
+// Unassignment schemas (same structure as assignment)
+const unassignCouponFromFirmSchema = Joi.object({
+  firm_id: Joi.string().uuid().required(),
+  coupon_id: Joi.string().uuid().required(),
+});
+
+const unassignCouponFromAccountTypeSchema = Joi.object({
+  account_type_id: Joi.string().uuid().required(),
+  coupon_id: Joi.string().uuid().required(),
+});
+
 module.exports = {
   createCouponSchema,
   updateCouponSchema,
   assignCouponToFirmSchema,
   assignCouponToAccountTypeSchema,
+  unassignCouponFromFirmSchema,
+  unassignCouponFromAccountTypeSchema,
 };
 
 

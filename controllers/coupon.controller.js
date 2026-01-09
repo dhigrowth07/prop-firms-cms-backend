@@ -1,12 +1,71 @@
-const { Coupon, sequelize } = require("../config/connectDB");
+const { Coupon, sequelize, Firm, AccountType } = require("../config/connectDB");
 const { successResponse, errorResponse } = require("../utils/apiResponse");
 
 const listCoupons = async (req, res) => {
   try {
-    const coupons = await Coupon.findAll();
+    const coupons = await Coupon.findAll({
+      include: [
+        {
+          model: Firm,
+          as: "firms",
+          attributes: ["id"],
+          through: { attributes: [] },
+        },
+        {
+          model: AccountType,
+          as: "account_types",
+          attributes: ["id"],
+          through: { attributes: [] },
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
     return successResponse(res, "Coupons fetched successfully", 200, { coupons });
   } catch (err) {
+    console.error("[listCoupons] Error:", err);
     return errorResponse(res, "Failed to fetch coupons", 500, err);
+  }
+};
+
+const getCouponById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { Firm, AccountType, FirmCoupon, CouponAccountType } = require("../config/connectDB");
+
+    const coupon = await Coupon.findByPk(id, {
+      include: [
+        {
+          model: Firm,
+          as: "firms",
+          through: { attributes: [] },
+          attributes: ["id", "name", "slug", "firm_type"],
+          required: false,
+        },
+        {
+          model: AccountType,
+          as: "account_types",
+          through: { attributes: [] },
+          attributes: ["id", "name", "firm_id"],
+          required: false,
+          include: [
+            {
+              model: Firm,
+              as: "firm",
+              attributes: ["id", "name"],
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!coupon) {
+      return errorResponse(res, "Coupon not found", 404);
+    }
+
+    return successResponse(res, "Coupon fetched successfully", 200, { coupon });
+  } catch (err) {
+    return errorResponse(res, "Failed to fetch coupon", 500, err);
   }
 };
 
@@ -82,6 +141,7 @@ const deleteCoupon = async (req, res) => {
 
 module.exports = {
   listCoupons,
+  getCouponById,
   createCoupon,
   updateCoupon,
   toggleCouponActive,

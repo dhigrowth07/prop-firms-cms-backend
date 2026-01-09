@@ -18,6 +18,11 @@ const createCountry = async (req, res) => {
     const country = await Country.create(req.body);
     return successResponse(res, "Country created successfully", 201, { country });
   } catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError") {
+      const field = err.errors[0]?.path;
+      const value = err.errors[0]?.value;
+      return errorResponse(res, `Country with this ${field} (${value}) already exists`, 400, err);
+    }
     return errorResponse(res, "Failed to create country", 500, err);
   }
 };
@@ -32,6 +37,11 @@ const updateCountry = async (req, res) => {
     await country.update(req.body);
     return successResponse(res, "Country updated successfully", 200, { country });
   } catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError") {
+      const field = err.errors[0]?.path;
+      const value = err.errors[0]?.value;
+      return errorResponse(res, `Country with this ${field} (${value}) already exists`, 400, err);
+    }
     return errorResponse(res, "Failed to update country", 500, err);
   }
 };

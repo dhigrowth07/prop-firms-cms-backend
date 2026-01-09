@@ -36,9 +36,15 @@ const firmSlugParamSchema = Joi.object({
   slug: Joi.string().required(),
 });
 
+const bulkActionSchema = Joi.object({
+  ids: Joi.array().items(Joi.string().uuid()).min(1).required(),
+  action: Joi.string().valid("activate", "deactivate", "delete").required(),
+});
+
 module.exports = {
   createFirmSchema,
   updateFirmSchema,
   firmIdParamSchema,
   firmSlugParamSchema,
+  bulkActionSchema,
 };

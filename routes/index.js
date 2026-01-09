@@ -15,6 +15,7 @@ const adminCouponsRoutes = require("./admin.coupons.route");
 const adminCountriesRoutes = require("./admin.countries.route");
 const adminCommissionsRoutes = require("./admin.commissions.route");
 const adminUsersRoutes = require("./admin.users.route");
+const adminDashboardRoutes = require("./admin.dashboard.route");
 
 // Public routes (no authentication required)
 router.use("/firms", publicFirmsRoutes);
@@ -23,6 +24,7 @@ router.use("/firms", publicFirmsRoutes);
 router.use("/auth", authRoutes);
 
 // Admin CMS routes
+router.use("/admin/dashboard", adminDashboardRoutes);
 router.use("/admin/firms", adminFirmsRoutes);
 router.use("/admin/platforms", adminPlatformsRoutes);
 router.use("/admin/brokers", adminBrokersRoutes);

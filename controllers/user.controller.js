@@ -6,8 +6,8 @@ const { hashPassword } = require("../utils/passwordUtils");
 const listUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ["id", "name", "email", "role", "is_active", "created_at", "updated_at"],
-      order: [["created_at", "DESC"]],
+      attributes: ["id", "name", "email", "role", "is_active", "createdAt", "updatedAt"],
+      order: [["createdAt", "DESC"]],
     });
 
     return successResponse(res, "Users fetched successfully", 200, { users });
@@ -21,7 +21,7 @@ const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id, {
-      attributes: ["id", "name", "email", "role", "is_active", "created_at", "updated_at"],
+      attributes: ["id", "name", "email", "role", "is_active", "createdAt", "updatedAt"],
     });
 
     if (!user) {
@@ -61,8 +61,8 @@ const createUser = async (req, res) => {
         email: user.email,
         role: user.role,
         is_active: user.is_active,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     });
   } catch (err) {
@@ -94,8 +94,8 @@ const updateUser = async (req, res) => {
         email: user.email,
         role: user.role,
         is_active: user.is_active,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     });
   } catch (err) {
@@ -123,8 +123,8 @@ const toggleUserActive = async (req, res) => {
         email: user.email,
         role: user.role,
         is_active: user.is_active,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     });
   } catch (err) {
